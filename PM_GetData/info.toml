@@ -1,4 +1,7 @@
 [meta]
 name        = "PM_GetData"
 author      = "Remi8404"
-category    = "Data Gatherer for AI Agent"
+category    = "Data Gatherer for AI Agent and TAS"
+
+[script]
+dependencies = [ "VehicleState" ]
