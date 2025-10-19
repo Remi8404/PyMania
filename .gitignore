@@ -1,1 +1,2 @@
-/PluginsExample/
+# ignore all examples of info.toml + {}.as plugins in workspace
+/PluginsExample/ 
