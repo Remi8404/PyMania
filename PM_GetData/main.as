@@ -35,9 +35,18 @@ void append_int(MemoryBuffer@ buf, int32 val)
 // Main function - send data through socket on port 9000 - get inputs through port 9001
 void Main()
 {
-   while (true) {
-      //const float SideSpeed = VehicleState::GetSideSpeed();
-      print(Text::Format("%.2f", 12.565456));
-      yield();
-   }
+	float prev_speed = 0;
+	float speed = 0;
+	float prev_acceleration = 0;
+	float acceleration = 0;
+	float jerk = 0;
+	bool isBraking = false;
+	bool isFinished = false;
+	int _curCP = 0;
+	int _curLap = 0;
+	while (true) {
+		//const float SideSpeed = VehicleState::GetSideSpeed();
+		print(Text::Format("%.2f", 12.565456));
+		yield();
+	}
 }
