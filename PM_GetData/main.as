@@ -1,142 +1,84 @@
-// Palamabron - GetData Plugin
-bool send_memory_buffer(Net::Socket@ sock, MemoryBuffer@ buf)
-{
-	if (!sock.Write(buf))
-	{
-		print("INFO: Disconnected, could not send data.");
-		return false;
-	}
-	return true;
+// Data Sending Plugin for Trackmania to {Python || other kind} Server
+
+// --- Buffer Writing Functions ---
+bool send_memory_buffer(Net::Socket@ sock, MemoryBuffer@ buf) {
+    if (!sock.Write(buf)) {
+        print("INFO: Disconnected, could not send data.");
+        return false;
+    }
+    return true;
 }
 
-void append_float(MemoryBuffer@ buf, float val)
-{
-	buf.Write(val);
+void append_float(MemoryBuffer@ buf, float val) {
+    buf.Write(val);
 }
 
-void append_bool(MemoryBuffer@ buf, bool val)
-{
-	if (val)
-	{
-		buf.Write(1.0f);
-	}
-	else
-	{
-		buf.Write(0.0f);
-
-	}
+void append_bool(MemoryBuffer@ buf, bool val) {
+    uint8 byte_val = val ? 1 : 0;
+    buf.Write(byte_val);
 }
 
-void append_int(MemoryBuffer@ buf, int32 val)
-{
-	buf.Write(float(val));
-}
+void Main() {
+    print("Starting plugin as TCP Client...");
 
-// Main function - send data through socket on port 9000 - get inputs through port 9001
-void Main()
-{
-	float prev_speed = 0;
-	float speed = 0;
-	float prev_acceleration = 0;
-	float acceleration = 0;
-	float jerk = 0;
-	bool isFinished = false;
-	int _curCP = 0;
-	int _curLap = 0;
-	while (true) {
-		CSceneVehicleVisState@ vehicle = VehicleState::ViewingPlayerState();
+    auto sock = Net::Socket();
+    MemoryBuffer@ buf = MemoryBuffer(0);
 
-		auto sock_serv = Net::Socket();
-		if (!sock_serv.Listen("127.0.0.1", 9000)) {
-			print("Could not initiate server socket.");
-			return;
-		}
-		print(Time::Now + ": Waiting for incoming connection...");
+    float prev_speed = 0;
+    float prev_accel = 0;
 
-		while(!sock_serv.Available()){
-			yield();
-		}
-		print("Socket can read");
-		auto sock = sock_serv.Accept();
+    while (true) {
+        
+        print("⌛ Trying to connect to Python Server on 127.0.0.1:9000...");
+        
+        if (!sock.Connect("127.0.0.1", 9000)) {
+            print("❌ Connection failed. Retrying in 5 seconds...");
+            sock.Close(); 
+            sleep(5000); 
+            continue;
+        }
+        
+        print("✅ Connected to Python Server.");
 
-		print(Time::Now + ": Accepted incomming connection.");
+        while (!sock.CanWrite()) yield(); 
+        print("🟢 Ready to send data...");
 
-		while (!sock.CanWrite()) {
-			yield();
-		}
-		print("Socket can write");
-		print(Time::Now + ": Connected!");
+        while (true) {
+            CTrackMania@ app = cast<CTrackMania>(GetApp());
+            if (app is null) { yield(); continue; }
 
-		// OpenPlanet can store bytes in a MemoryBuffer:
-		MemoryBuffer@ buf = MemoryBuffer(0);
+            CSmArenaClient@ playground = cast<CSmArenaClient>(app.CurrentPlayground);
+            if (playground is null) { yield(); continue; }
 
-		bool cc = true;
-		while(cc)
-		{
-			CTrackMania@ app = cast<CTrackMania>(GetApp());
-			if(app is null)
-			{
-				yield();
-				continue;
-			}
-			CSmArenaClient@ playground = cast<CSmArenaClient>(app.CurrentPlayground);
-			if(playground is null)
-			{
-				yield();
-				continue;
-			}
-			CSmArena@ arena = cast<CSmArena>(playground.Arena);
-			if(arena is null)
-			{
-				yield();
-				continue;
-			}
-			if(arena.Players.Length <= 0)
-			{
-				yield();
-				continue;
-			}
+            CSceneVehicleVisState@ vehicle = VehicleState::ViewingPlayerState();
+            if (vehicle is null) { yield(); continue; }
 
-			auto player = arena.Players[0];
-			if(player is null)
-			{
-				yield();
-				continue;
-			}
-			if(vehicle is null)
-			{
-				yield();
-				continue;
-			}
-			auto race_state = playground.GameTerminals[0].UISequence_Current;
-			speed = vehicle.FrontSpeed;
-      		acceleration = speed - prev_speed;
-			jerk = acceleration - prev_acceleration;
-      		prev_speed = speed;
-			prev_acceleration = acceleration;
+            auto race_state = playground.GameTerminals[0].UISequence_Current;
 
-            if(race_state == SGamePlaygroundUIConfig::EUISequence::Finish || race_state == SGamePlaygroundUIConfig::EUISequence::EndRound)
-			{
-				isFinished = true;
-			}
-			else
-			{
-				isFinished = false;
-			}
+            float speed = vehicle.FrontSpeed;
+            float accel = speed - prev_speed;
+            float jerk = accel - prev_accel;
+            prev_speed = speed;
+            prev_accel = accel;
 
-			buf.Seek(0, 0);
-			// Sending data
-            append_float(buf, vehicle.FrontSpeed); // speed
-			append_float(buf, acceleration); // acceleration
-			append_float(buf, jerk); // jerk
-			append_bool(buf, isFinished); // course status
+            bool isFinished = (race_state == SGamePlaygroundUIConfig::EUISequence::Finish
+                || race_state == SGamePlaygroundUIConfig::EUISequence::EndRound);
 
-			buf.Seek(0, 0);
-	    	cc = send_memory_buffer(sock, buf);
+            buf.Seek(0, 0); 
+            append_float(buf, speed);
+            append_float(buf, accel);
+            append_float(buf, jerk);
+            append_bool(buf, isFinished);
+            buf.Seek(0, 0); 
 
-			yield(); 
-		}
-		sock.Close();
-		sock_serv.Close();
-	}
+            if (!send_memory_buffer(sock, buf)) {
+                print("🔴 Disconnected from server.");
+                break; 
+            }
+
+            yield(); 
+        }
+        sock.Close();
+        print("🧹 Socket closed, retrying connection...");
+    }
 }
