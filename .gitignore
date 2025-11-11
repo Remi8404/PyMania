@@ -1,2 +1,3 @@
 # ignore all examples of info.toml + {}.as plugins in workspace
 /PluginsExample/ 
+/src/Server/__pycache__/
