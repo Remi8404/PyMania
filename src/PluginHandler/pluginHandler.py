@@ -23,6 +23,7 @@ def pluginHandler() -> None :
         if distantPluginFolder.exists():
             shutil.rmtree(distantPluginFolder)
         shutil.copytree(localPluginFolder, distantPluginFolder)
+        print("PM_GetData update successed !")
     else :
-        print("No need for update")
+        print("No need to update PM_GetData")
     return 
