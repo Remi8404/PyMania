@@ -1,3 +1,3 @@
 /PluginsExample/ 
 **/__pycache__/
-# /src/Config/localConfig.py
+/src/Config/local_config.json

@@ -7,7 +7,7 @@ def pluginHandler() -> None :
     ROOT = Path(__file__).resolve().parents[2]
 
     if config['openplanetPath'] == "" :
-        print("Invalid Path, Plugin can't be moved automatically.\nEither specify a correct path in Config/local_config.py or copy it manually.\n\n")
+        print("\nInvalid Path, Plugin can't be moved automatically.\nEither specify a correct path in Config/local_config.py or copy it manually.\n\n")
         return
 
     distantPluginFolder = Path(config["openplanetPath"]) / "PM_GetData"
