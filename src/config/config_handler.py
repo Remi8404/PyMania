@@ -27,7 +27,7 @@ def configHandler() -> dict[str, str]:
             with open(local_path, 'r') as f:
                 local_config = json.load(f)
             config.update(local_config)
-            print(f"Configuation set to '{LOCAL_FILE}'.")
+            print(f"Configuration set to '{LOCAL_FILE}'.")
             
         except json.JSONDecodeError:
             print(f"Warning : '{LOCAL_FILE}' corrupted or empty. Using default values.")
