@@ -1,0 +1,1 @@
+openPlanetPath = "" # write here the specific path to OpenplanetNext folder : example -> C:\Users\{user}\OpenplanetNext
