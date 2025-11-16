@@ -25,23 +25,22 @@ void Main() {
     MemoryBuffer@ buf = MemoryBuffer(0);
 
     float prev_speed = 0;
-    float prev_accel = 0;
 
     while (true) {
         
-        print("⌛ Trying to connect to Python Server on 127.0.0.1:9000...");
+        print("Trying to connect to Local Server on 127.0.0.1:9000...");
         
         if (!sock.Connect("127.0.0.1", 9000)) {
-            print("❌ Connection failed. Retrying in 5 seconds...");
+            print("Connection failed. Retrying in 5 seconds...");
             sock.Close(); 
             sleep(5000); 
             continue;
         }
         
-        print("✅ Connected to Python Server.");
+        print("Connected to Local Server : '127.0.0.1:9000' .");
 
         while (!sock.CanWrite()) yield(); 
-        print("🟢 Ready to send data...");
+        print("Ready to send data...");
 
         while (true) {
             CTrackMania@ app = cast<CTrackMania>(GetApp());
@@ -57,9 +56,7 @@ void Main() {
 
             float speed = vehicle.FrontSpeed;
             float accel = speed - prev_speed;
-            float jerk = accel - prev_accel;
             prev_speed = speed;
-            prev_accel = accel;
 
             bool isFinished = (race_state == SGamePlaygroundUIConfig::EUISequence::Finish
                 || race_state == SGamePlaygroundUIConfig::EUISequence::EndRound);
@@ -67,18 +64,17 @@ void Main() {
             buf.Seek(0, 0); 
             append_float(buf, speed);
             append_float(buf, accel);
-            append_float(buf, jerk);
             append_bool(buf, isFinished);
             buf.Seek(0, 0); 
 
             if (!send_memory_buffer(sock, buf)) {
-                print("🔴 Disconnected from server.");
+                print("Disconnected from server.");
                 break; 
             }
 
             yield(); 
         }
         sock.Close();
-        print("🧹 Socket closed, retrying connection...");
+        print("Socket closed, retrying connection...");
     }
 }
