@@ -4,8 +4,8 @@ import struct
 def runServer() -> None :
     HOST = '127.0.0.1'
     PORT = 9000
-    PACKET_SIZE = 13  
-    FORMAT = '<fffB' 
+    PACKET_SIZE = 9 
+    FORMAT = '<ffB' 
 
     server_socket = socket.socket(socket.AF_INET, socket.SOCK_STREAM)
     server_socket.bind((HOST, PORT))
@@ -27,10 +27,10 @@ def runServer() -> None :
                         break
                     
                     if len(data) == PACKET_SIZE:
-                        speed, accel, jerk, is_finished_byte = struct.unpack(FORMAT, data)
+                        speed, accel, is_finished_byte = struct.unpack(FORMAT, data)
                         is_finished = bool(is_finished_byte)
 
-                        print(f"Speed: {speed:.2f}, Accel: {accel:.2f}, Jerk: {jerk:.2f}, Finished: {is_finished}")
+                        print(f"Speed: {speed:.2f}, Accel: {accel:.2f}, Finished: {is_finished}")
                     else:
                         print(f"Received incomplete data (expected {PACKET_SIZE} bytes, got {len(data)}). Disconnecting.")
                         break
