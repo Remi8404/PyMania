@@ -1,39 +1,33 @@
 import socket
 import struct
+import os
+
+HOST = '127.0.0.1'
+PORT = 9000
+PACKET_SIZE = 9  
+FORMAT = '<ffB' 
 
 def runServer() -> None :
-    HOST = '127.0.0.1'
-    PORT = 9000
-    PACKET_SIZE = 9 
-    FORMAT = '<ffB' 
-
-    server_socket = socket.socket(socket.AF_INET, socket.SOCK_STREAM)
-    server_socket.bind((HOST, PORT))
-    server_socket.listen(1)
-
+    serverSocket = socket.socket(socket.AF_INET, socket.SOCK_STREAM)
+    serverSocket.bind((HOST, PORT))
+    serverSocket.listen(1)
+    oldDataSet = {}
+    dataSet = {}
+ 
     print(f"Server is listening on {HOST}:{PORT}...")
 
     while True:
         try:
-            conn, addr = server_socket.accept() 
-            print(f"✅ Connection established from {addr}")
+            conn, addr = serverSocket.accept() 
+            print(f"Connection established from {addr}")
 
             with conn:
                 while True:
-                    data = conn.recv(PACKET_SIZE)
-                    
-                    if not data:
-                        print("Connection closed by client (OpenPlanet).")
-                        break
-                    
-                    if len(data) == PACKET_SIZE:
-                        speed, accel, is_finished_byte = struct.unpack(FORMAT, data)
-                        is_finished = bool(is_finished_byte)
-
-                        print(f"Speed: {speed:.2f}, Accel: {accel:.2f}, Finished: {is_finished}")
-                    else:
-                        print(f"Received incomplete data (expected {PACKET_SIZE} bytes, got {len(data)}). Disconnecting.")
-                        break
+                    oldDataSet = dataSet.copy()
+                    dataSet = getData(conn)
+                    if(dataSet["connectionClose"]): break
+                    if(dataSet != oldDataSet):
+                        print(f"Speed: {dataSet['speed']:.2f}, Accel: {dataSet['acceleration']:.2f}, Finished: {dataSet['isFinished']}")
         
         except socket.error as e:
             print(f"Socket error: {e}. Restarting listener...")
@@ -42,3 +36,24 @@ def runServer() -> None :
         finally:
             if 'conn' in locals() and conn is not None:
                 conn.close()
+
+
+def getData(conn: socket.socket):
+    formattedData: dict[str, float | bool] = {"connectionClose":False}
+    socketData = conn.recv(PACKET_SIZE)
+    
+    if not socketData:
+        print("Connection closed by client (OpenPlanet).")
+        return {"connectionClose":True}
+    
+    if len(socketData) == PACKET_SIZE:
+        speed, accel, isFinishedByte = struct.unpack(FORMAT, socketData)
+        isFinished = bool(isFinishedByte)
+        formattedData['speed'] = speed
+        formattedData['acceleration'] = accel
+        formattedData['isFinished'] = isFinished
+        
+        return formattedData
+    else:
+        print(f"Received incomplete data (expected {PACKET_SIZE} bytes, got {len(socketData)}). Disconnecting.")
+        return {"connectionClose":True}

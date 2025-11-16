@@ -54,7 +54,7 @@ void Main() {
 
             auto race_state = playground.GameTerminals[0].UISequence_Current;
 
-            float speed = vehicle.FrontSpeed;
+            float speed = vehicle.FrontSpeed * 3.6;
             float accel = speed - prev_speed;
             prev_speed = speed;
 
