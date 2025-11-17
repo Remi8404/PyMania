@@ -1,11 +1,10 @@
 import socket
 import struct
-import os
 
 HOST = '127.0.0.1'
 PORT = 9000
-PACKET_SIZE = 9  
-FORMAT = '<ffB' 
+PACKET_SIZE = 33  
+FORMAT = '<ffffffBBBBIB' 
 
 def runServer() -> None :
     serverSocket = socket.socket(socket.AF_INET, socket.SOCK_STREAM)
@@ -27,8 +26,8 @@ def runServer() -> None :
                     dataSet = getData(conn)
                     if(dataSet["connectionClose"]): break
                     if(dataSet != oldDataSet):
-                        print(f"Speed: {dataSet['speed']:.2f}, Accel: {dataSet['acceleration']:.2f}, Finished: {dataSet['isFinished']}")
-        
+                        print(f"Speed: {dataSet['speed']:.2f}, Accel: {dataSet['acceleration']:.2f}, sideSpeed: {dataSet['sideSpeed']:.2f}, yaw: {dataSet['yaw']:.2f}, pitch: {dataSet['pitch']:.2f}, roll: {dataSet['roll']:.2f},  wheelsState: {dataSet['wheelsState']}, startTime: {dataSet['startTime']}, Finished: {dataSet['isFinished']}")
+                        
         except socket.error as e:
             print(f"Socket error: {e}. Restarting listener...")
         except Exception as e:
@@ -39,7 +38,7 @@ def runServer() -> None :
 
 
 def getData(conn: socket.socket):
-    formattedData: dict[str, float | bool] = {"connectionClose":False}
+    formattedData: dict[str, float | bool | dict[str, bool]] = {"connectionClose":False}
     socketData = conn.recv(PACKET_SIZE)
     
     if not socketData:
@@ -47,11 +46,21 @@ def getData(conn: socket.socket):
         return {"connectionClose":True}
     
     if len(socketData) == PACKET_SIZE:
-        speed, accel, isFinishedByte = struct.unpack(FORMAT, socketData)
-        isFinished = bool(isFinishedByte)
+        speed, accel, sideSpeed, yaw, pitch, roll, flGroundContact, frGroundContact, rlGroundContact, rrGroundContact, startTime, isFinishedByte = struct.unpack(FORMAT, socketData)
         formattedData['speed'] = speed
         formattedData['acceleration'] = accel
-        formattedData['isFinished'] = isFinished
+        formattedData['sideSpeed'] = sideSpeed
+        formattedData['yaw'] = yaw
+        formattedData['pitch'] = pitch
+        formattedData['roll'] = roll
+        formattedData['wheelsState'] = {
+            "FL":bool(flGroundContact),
+            "FR":bool(frGroundContact),
+            "RL":bool(rlGroundContact),
+            "RR":bool(rrGroundContact)
+            }
+        formattedData['startTime'] = startTime
+        formattedData['isFinished'] = bool(isFinishedByte)
         
         return formattedData
     else:
