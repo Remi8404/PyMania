@@ -19,6 +19,12 @@ void append_bool(MemoryBuffer@ buf, bool val) {
     buf.Write(byte_val);
 }
 
+void append_vec3(MemoryBuffer@ buf, vec3 val) {
+    buf.Write(val.x);
+    buf.Write(val.y);
+    buf.Write(val.z);
+}
+
 void Main() {
     print("Starting plugin as TCP Client...");
 
@@ -91,6 +97,7 @@ void Main() {
             append_float(buf, yaw);
             append_float(buf, pitch);
             append_float(buf, roll);
+            append_vec3(buf, vehicle.Position);
             append_bool(buf, flOnGround);
             append_bool(buf, frOnGround);
             append_bool(buf, rlOnGround);  
