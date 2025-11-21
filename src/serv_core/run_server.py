@@ -13,14 +13,14 @@ def runServer() -> socket.socket:
     print("\tWaiting for a connection from OpenPlanet...")
     try:
         conn, addr = serverSocket.accept() 
-        print(f"Connection established from {addr}")
+        print(f"\tConnection established from {addr}")
         return conn                                      
     except socket.error as e:
-        print(f"Socket error: {e}. Restarting listener in 5 seconds...")
+        print(f"\tSocket error: {e}. Restarting listener in 5 seconds...")
         sleep(5)
         return runServer()
     except Exception as e:
-        print(f"An unexpected error occurred: {e}. Restarting listener in 5 seconds...")
+        print(f"\tAn unexpected error occurred: {e}. Restarting listener in 5 seconds...")
         sleep(5)
         return runServer()
     
