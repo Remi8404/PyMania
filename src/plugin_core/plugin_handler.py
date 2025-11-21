@@ -1,13 +1,13 @@
 import shutil
 from pathlib import Path
-from Config.config_handler import configHandler
+from src.config_core.config_handler import configHandler
 
 def pluginHandler() -> None :
     config = configHandler()
     ROOT = Path(__file__).resolve().parents[2]
 
     if config['openplanetPath'] == "" :
-        print("\nInvalid Path, Plugin can't be moved automatically.\nEither specify a correct path in Config/local_config.py or copy it manually.\n\n")
+        print("Invalid Path, Plugin can't be updated automatically.\n\tEither specify a correct path in Config/local_config.py or copy it manually.\n\n")
         return
 
     distantPluginFolder = Path(config["openplanetPath"]) / "PM_GetData"

@@ -9,7 +9,8 @@ def runServer() -> socket.socket:
     serverSocket.bind((HOST, PORT))
     serverSocket.listen(1)
  
-    print(f"Server is listening on {HOST}:{PORT}...")
+    print(f"\tServer is listening on {HOST}:{PORT}...")
+    print("\tWaiting for a connection from OpenPlanet...")
     try:
         conn, addr = serverSocket.accept() 
         print(f"Connection established from {addr}")

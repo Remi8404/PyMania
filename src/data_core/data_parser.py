@@ -10,9 +10,7 @@ def positionParser(data: ReceivedData, parsedPositions: Optional[ParsedPositions
             "previous": {"x": [], "y": [], "z": []},
             "current": {"x": [], "y": [], "z": []}
         }
-
     current_traj = parsedPositions["current"]
-
     is_reset_signal = data.get('startTime') == 4294967295 
     is_finished = data.get('isFinished', False)
 

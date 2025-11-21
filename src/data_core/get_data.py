@@ -1,7 +1,7 @@
 import socket
 import struct
 
-PACKET_SIZE = 45  
+PACKET_SIZE = 45
 FORMAT = '<fffffffffBBBBIB' 
 
 def getData(conn: socket.socket):
@@ -10,27 +10,26 @@ def getData(conn: socket.socket):
     
     if not socketData:
         print("Connection closed by client (OpenPlanet).")
-        formattedData["connectionClose"] = True
-        return formattedData
+        raise ConnectionAbortedError("Client closed connection.")
     
     if len(socketData) == PACKET_SIZE:
-        speed, accel, sideSpeed, yaw, pitch, roll, x, y, z, flGroundContact, frGroundContact, rlGroundContact, rrGroundContact, startTime, isFinishedByte = struct.unpack(FORMAT, socketData)
+        speed, acceleration, sideSpeed, yaw, pitch, roll, x, y, z, flGroundContact, frGroundContact, rlGroundContact, rrGroundContact, startTime, isFinishedByte = struct.unpack(FORMAT, socketData)
         formattedData['speed'] = speed
-        formattedData['acceleration'] = accel
+        formattedData['acceleration'] = acceleration
         formattedData['sideSpeed'] = sideSpeed
         formattedData['yaw'] = yaw
         formattedData['pitch'] = pitch
         formattedData['roll'] = roll
         formattedData['position'] = {
-            "x":x,
-            "y":y,
-            "z":z
+            "x": x,
+            "y": y,
+            "z": z
         }
         formattedData['wheelsState'] = {
-            "FL":bool(flGroundContact),
-            "FR":bool(frGroundContact),
-            "RL":bool(rlGroundContact),
-            "RR":bool(rrGroundContact)
+            "FL": bool(flGroundContact),
+            "FR": bool(frGroundContact),
+            "RL": bool(rlGroundContact),
+            "RR": bool(rrGroundContact)
             }
         formattedData['startTime'] = startTime
         formattedData['isFinished'] = bool(isFinishedByte)
@@ -38,5 +37,4 @@ def getData(conn: socket.socket):
         return formattedData
     else:
         print(f"Received incomplete data (expected {PACKET_SIZE} bytes, got {len(socketData)}). Disconnecting.")
-        formattedData["connectionClose"] = True
-        return formattedData
+        raise ConnectionAbortedError("Incomplete data received.")
