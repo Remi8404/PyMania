@@ -4,11 +4,11 @@ from pathlib import Path
 def pluginUpdate(config: dict[str, str] = {}) -> None :
     ROOT = Path(__file__).resolve().parents[2]
 
-    if config['openplanetPath'] == "" :
-        print("Invalid Path, Plugin can't be updated automatically.\n\tEither specify a correct path in Config/local_config.py or copy it manually.\n\n")
+    if config['opp'] == "" :
+        print("\tInvalid Path, Plugin can't be updated automatically.\n\tEither specify a correct path in Config/local_config.py or copy it manually.\n")
         return
 
-    distantPluginFolder = Path(config["openplanetPath"]) / "PM_GetData"
+    distantPluginFolder = Path(config["opp"]) / "PM_GetData"
     distantPluginFile = distantPluginFolder / "main.as"
     distantPluginUpdate = distantPluginFile.stat().st_mtime if distantPluginFolder.exists() else 0
 
@@ -17,11 +17,11 @@ def pluginUpdate(config: dict[str, str] = {}) -> None :
     localPluginUpdate = localPluginFile.stat().st_mtime
     
     if localPluginUpdate > distantPluginUpdate :
-        print("Moving local plugin to OpenplanetNext Plugins folder ...")
+        print("\tMoving local plugin to OpenplanetNext Plugins folder ...")
         if distantPluginFolder.exists():
             shutil.rmtree(distantPluginFolder)
         shutil.copytree(localPluginFolder, distantPluginFolder)
-        print("PM_GetData update successed !")
+        print("\tPM_GetData update successed !")
     else :
-        print("No need to update PM_GetData")
+        print("\tNo need to update PM_GetData")
     return 

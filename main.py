@@ -220,6 +220,14 @@ def cmdThreadFunc(threads: dict[str, threading.Thread]):
             elif commandKey == "status":
                 handleStatus(threads)
                 CMD_QUEUE.put('continue')
+            elif commandKey == "set":
+                if mainArg and len(others) == 1:
+                    value = "".join(others)
+                    setConfigValue(mainArg, value)
+                    config[mainArg] = value
+                else:
+                    print("\tUsage: set [key] [value]")
+                CMD_QUEUE.put('continue')
             elif commandKey == "run":
                 if mainArg in COMPONENT_MAP:
                     startComponent(mainArg, threads)
