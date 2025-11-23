@@ -104,7 +104,7 @@ COMMAND FUNCTIONS
 COMPONENT_MAP = {
     "server": serverThreadFunc,
     "display": displayThreadFunc,
-    # "ai": aiThreadFunc,
+    "ai": aiThreadFunc,
 }
 
 STOP_MAP = {
