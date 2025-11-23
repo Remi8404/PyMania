@@ -38,7 +38,7 @@ def configHandler() -> dict[str, str]:
     return config
 
 
-def set_config_value(key: str, value: str | int):
+def setConfigValue(key: str, value: str | int):
     if os.path.exists(local_path):
         try:
             with open(local_path, 'r') as f:

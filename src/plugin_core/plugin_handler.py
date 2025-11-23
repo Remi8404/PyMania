@@ -1,9 +1,7 @@
 import shutil
 from pathlib import Path
-from src.config_core.config_handler import configHandler
 
-def pluginHandler() -> None :
-    config = configHandler()
+def pluginUpdate(config: dict[str, str] = {}) -> None :
     ROOT = Path(__file__).resolve().parents[2]
 
     if config['openplanetPath'] == "" :

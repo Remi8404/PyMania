@@ -5,6 +5,8 @@ import os
 from src.serv_core.run_server import runServer
 from src.serv_core.close_server import closeServer
 from  src.data_core.get_data import getData
+from src.config_core.config_handler import configHandler, setConfigValue
+from src.plugin_core.plugin_handler import pluginUpdate
 
 GAME_STATE_QUEUE: Queue[dict[str, bool | float | dict[str, float]]] = Queue() 
 """ Used to share game state data between server and AI/display threads. """
@@ -14,6 +16,12 @@ CMD_QUEUE: Queue[str] = Queue()
 """ Used to send commands between threads. """
 STOP_EVENT = threading.Event()
 """ Security event to stop all threads when needed (stopping all threads inside cmd thread). """
+STOP_SERVER = threading.Event()
+""" Event to stop server thread if needed. """
+STOP_DISPLAY = threading.Event()
+""" Event to stop display thread if needed. """
+STOP_AI = threading.Event()
+""" Event to stop AI thread if needed. """
 
 """
 =-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=
@@ -24,15 +32,14 @@ def serverThreadFunc():
     """ Server thread function to handle socket connection and data reception. """
     conn = runServer()
     CMD_QUEUE.put('continue')
-    print("\tSERVER THREAD: Started.")
     try:
         if conn:
             conn.settimeout(0.1) 
     except Exception as e:
-        print(f"\tSERVER THREAD: Warning - Could not set socket timeout: {e}")
+        print(f"\tSERVER > /!\\ Warning /!\\ - Could not set socket timeout: '{e}'")
         pass
 
-    while not STOP_EVENT.is_set():
+    while not STOP_EVENT.is_set() and not STOP_SERVER.is_set()  :
         try:
             data = getData(conn)
             GAME_STATE_QUEUE.put(data)
@@ -48,43 +55,44 @@ def serverThreadFunc():
         except TimeoutError:
             pass 
         except Exception as e:
-            print(f"\tSERVER THREAD: Error or client disconnected: {e}")
+            print(f"\tSERVER > Error or client disconnected: '{e}'")
             STOP_EVENT.set()
             
         finally:
             time.sleep(0.001) 
 
     closeServer(conn)
-    print("SERVER: Stopped.")
+    CMD_QUEUE.put('continue')
     return
 
 
 def aiThreadFunc():
     """ Not implemented yet. Implement before use. """
-    print("AI Thread: Started.")
+    print("\tAI > Started.")
     
-    while not STOP_EVENT.is_set():
+    while not STOP_EVENT.is_set() and not STOP_AI.is_set():
         if not GAME_STATE_QUEUE.empty():
             state_data = GAME_STATE_QUEUE.get()
 
 
-    print("AI Thread: Stopped.")
+    print("\tAI > Stopped.")
     return
 
 
 def displayThreadFunc():
     """ Not implemented yet. Implement before use. """
-    print("Display Thread: Started.")
+    print("\tDISPLAY > Started.")
     CMD_QUEUE.put('continue')
     
-    while not STOP_EVENT.is_set():
+    while not STOP_EVENT.is_set() and not STOP_DISPLAY.is_set():
         if not GAME_STATE_QUEUE.empty():
             state_data = GAME_STATE_QUEUE.get()
             GAME_STATE_QUEUE.put_nowait(state_data)
 
         time.sleep(0.1)
 
-    print("Display Thread: Stopped.")
+    print("\tDISPLAY > Stopped.")
+    CMD_QUEUE.put('continue')
     return
 
 
@@ -99,6 +107,12 @@ COMPONENT_MAP = {
     # "ai": aiThreadFunc,
 }
 
+STOP_MAP = {
+    "server": STOP_SERVER,
+    "display": STOP_DISPLAY,
+    "ai": STOP_AI,
+}
+
 def clear():
     os.system('cls' if os.name == 'nt' else 'clear')
     return
@@ -107,11 +121,13 @@ def startComponent(name: str, threads: dict[str, threading.Thread]):
     """Creates and starts a thread for a given component if it's not already active."""
     if name in threads and threads[name].is_alive():
         print(f"\tComponent '{name}' is already ACTIVE.")
+        CMD_QUEUE.put('continue')
         return
 
     targetFunc = COMPONENT_MAP.get(name)
     if not targetFunc:
         print(f"\t Unknown component: '{name}'. Use 'run help' for a list of available components.")
+        CMD_QUEUE.put('continue')
         return
 
     try:
@@ -131,8 +147,9 @@ def handleStopComponent(name: str, threads: dict[str, threading.Thread]):
         print("\tSpecify component to stop (e.g., stop server).")
         return
     if name in threads and threads[name].is_alive():
-        print(f"CMD: Individual stopping of '{name}' is not yet supported via STOP_EVENT.")
-        print("Use 'quit' to stop all components.")
+        STOP_MAP[name].set()
+        threads[name].join()
+        print(f"\tComponent '{name}' has been stopped.")
     else:
         print(f"\tComponent '{name}' is not active or does not exist.")
 
@@ -162,6 +179,7 @@ COMMAND THREAD
 def cmdThreadFunc(threads: dict[str, threading.Thread]):
     """ Command thread function to handle user inputs and manage components. """
     cmdCounter = 0
+    config = configHandler()
     print(f"CMD[{cmdCounter}]> Started. Type 'help' for command list.")
     while not STOP_EVENT.is_set():
         try:
@@ -178,8 +196,16 @@ def cmdThreadFunc(threads: dict[str, threading.Thread]):
                 print("\t - clear: Clear the console.")
                 print("\t - quit or q: Quit the application.")
                 CMD_QUEUE.put('continue')
-            if fullCommand == "teapot":
+            elif fullCommand == "teapot":
                 print("\tI am a Tea Pot!")
+                CMD_QUEUE.put('continue')
+            elif fullCommand == "config":
+                print("\tCurrent Configuration:")
+                for key, value in config.items():
+                    print(f"\t - {key}: {value}")
+                CMD_QUEUE.put('continue')
+            elif fullCommand == "update":
+                pluginUpdate(config)
                 CMD_QUEUE.put('continue')
             elif fullCommand == "quit" or fullCommand == "q":
                 STOP_EVENT.set()
@@ -204,6 +230,16 @@ def cmdThreadFunc(threads: dict[str, threading.Thread]):
                 else:
                     print(f"\tUnknown component '{mainArg}'. Use 'run help' for a list of available components.")
                     CMD_QUEUE.put('continue')
+            elif commandKey == "stop":
+                if mainArg in STOP_MAP:
+                    handleStopComponent(mainArg, threads)
+                elif mainArg == "help":
+                    print("\tUsage: stop [component_name]")
+                    print("\tAvailable components: " + ", ".join(COMPONENT_MAP.keys()))
+                    CMD_QUEUE.put('continue')
+                else:
+                    print(f"\tUnknown component '{mainArg}'. Use 'stop help' for a list of available components.")
+                    CMD_QUEUE.put('continue')
 
             while CMD_QUEUE.empty() or CMD_QUEUE.get_nowait() != 'continue':
                 continue
@@ -221,7 +257,7 @@ def cmdThreadFunc(threads: dict[str, threading.Thread]):
 
 def main():
     """ Main function to start the command thread and manage application lifecycle. """
-    print("PyMania > Application started.")
+    print("PyMania> Application started.")
     threads: dict[str, threading.Thread] = {}
 
     cmdT = threading.Thread(target=cmdThreadFunc, name="CmdThread", args=(threads,))
@@ -242,7 +278,7 @@ def main():
                 t.join()
         if cmdT.is_alive():
             cmdT.join()
-        print("PyMania > Application terminated.")
+        print("PyMania> Application terminated.")
         exit(0)
 
 
