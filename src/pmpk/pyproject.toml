@@ -1,0 +1,7 @@
+[project]
+name = "pmpk"
+version = "0.1.0"
+description = "PyMania PacKage contains all the tools created for PyMania Project."
+readme = "README.md"
+requires-python = ">=3.12"
+dependencies = []

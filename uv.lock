@@ -1,0 +1,25 @@
+version = 1
+revision = 3
+requires-python = ">=3.12"
+
+[manifest]
+members = [
+    "pmpk",
+    "pymania",
+]
+
+[[package]]
+name = "pmpk"
+version = "0.1.0"
+source = { editable = "src/pmpk" }
+
+[[package]]
+name = "pymania"
+version = "0.1.0"
+source = { virtual = "." }
+dependencies = [
+    { name = "pmpk" },
+]
+
+[package.metadata]
+requires-dist = [{ name = "pmpk", editable = "src/pmpk" }]

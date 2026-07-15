@@ -1,0 +1,25 @@
+[project]
+name = "pymania"
+version = "0.1.0"
+description = "Add your description here"
+readme = "README.md"
+requires-python = ">=3.12"
+dependencies = [
+    "pmpk",
+]
+
+
+[tool.setuptools.packages.find]
+where = ["src"]
+include = ["pmpk"]
+
+[tool.uv.workspace]
+members = [
+    ".",
+    "src/pmpk",
+]
+
+[tool.uv.sources]
+PYMANIA = { workspace = true }
+pmpk = { workspace = true }
+
