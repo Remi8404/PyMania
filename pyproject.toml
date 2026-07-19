@@ -1,25 +1,14 @@
 [project]
-name = "pymania"
+name = "pmpk"
 version = "0.1.0"
-description = "Add your description here"
-readme = "README.md"
-requires-python = ">=3.12"
+requires-python = ">=3.11"
 dependencies = [
-    "pmpk",
+    "pandas>=3.0.3",
+    "pyopengl>=3.1.10",
+    "pyqt6>=6.11.0",
+    "pyqtgraph>=0.14.0",
 ]
 
-
-[tool.setuptools.packages.find]
-where = ["src"]
-include = ["pmpk"]
-
-[tool.uv.workspace]
-members = [
-    ".",
-    "src/pmpk",
-]
-
-[tool.uv.sources]
-PYMANIA = { workspace = true }
-pmpk = { workspace = true }
-
+[build-system]
+requires = ["hatchling"]
+build-backend = "hatchling.build"

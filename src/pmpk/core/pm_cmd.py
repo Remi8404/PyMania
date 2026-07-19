@@ -1,5 +1,5 @@
 from cmd import Cmd
-from threads import ThreadHandler
+from pmpk.threads.thread_handler import ThreadHandler
 
 class PMCmd(Cmd):
     intro = 'Welcome to PyMania CMD. Type help or ? to list commands.\n'

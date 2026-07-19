@@ -1,5 +1,4 @@
-from threading import Thread
-from pm_thread import PMThread
+from pmpk.threads.pm_thread import PMThread
 from typing import Callable, Any
 
 class ThreadHandler : 
@@ -9,7 +8,7 @@ class ThreadHandler :
     def __init__(self):
         self.threads : dict[str, PMThread] = {}
     
-    def startThread(self, name:str, function:Callable[[Any], None], params:tuple[Any] = (), is_daemon:bool = False) -> None:
+    def startThread(self, name:str, function:Callable[[Any], None], params:tuple[Any] = tuple([]), is_daemon:bool = False) -> None:
         """
         Starts a thread and store it in its thread container.
         Args:
