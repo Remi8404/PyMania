@@ -42,7 +42,12 @@ def build_registry() -> CommandRegistry:
     def ping(args: list[str], context: dict[str, Any]) -> str:
         sent_at = context["timestamp"]
         elapsed_ms = (time.perf_counter() - sent_at) * 1000
-        return f"Pong ! ({elapsed_ms:.2f} ms)"
+        context["log"]("test") #change this to an object as context.log("test")
+        return f"Console answered in {elapsed_ms:.2f} ms"
+    
+    @registry.register("clear", help="Clear console's output and history")
+    def clear(args:list[str], context: dict[str, Any]):
+        return "__CLEAR__"
     
     return registry
 

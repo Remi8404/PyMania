@@ -9,7 +9,8 @@ from pandas import DataFrame
 import numpy as np
 import time
 
-from pmpk.tools.commands import CommandRegistry
+from pmpk.graphics.commands import CommandRegistry
+
 
 PLACEMENT:dict[str, Callable[[int, int, int, int], tuple[int, int, int, int]]] = {
     "up-left": lambda x,y,w,h : (x,y,w,h),
@@ -143,9 +144,12 @@ class ConsoleWindow(PMWindow):
         self.input_line.clear()
         if not raw_input:
             return
-
+        
         self.print_to_console(f"> {raw_input}")
-        result = self.registry.execute(raw_input, {"timestamp": time.perf_counter()})
+        result = self.registry.execute(
+            raw_input, 
+            {"timestamp": time.perf_counter(), "log": self.print_to_console}  # replace this by a Object constructor such as Context()
+        )
 
         if result == "__CLEAR__":
             self.output_area.clear()

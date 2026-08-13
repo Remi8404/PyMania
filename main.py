@@ -1,9 +1,9 @@
 import sys
 from PyQt6.QtWidgets import QApplication
 
-from pmpk.tools.windows import Graphic3DWindow, ConsoleWindow
+from pmpk.graphics.windows import Graphic3DWindow, ConsoleWindow
 from pmpk.geometry import drawHelicoidaleCurve, drawRandomCurve, recenterDataFrame
-from pmpk.tools.commands import build_registry    
+from pmpk.graphics.commands import build_registry    
 
 def main():
     df = recenterDataFrame(drawHelicoidaleCurve(ppl=50, n_layers=4, z_dif=4), ["x","y"])
