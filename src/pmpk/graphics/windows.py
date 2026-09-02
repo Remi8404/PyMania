@@ -1,7 +1,7 @@
 from PyQt6.QtWidgets import QApplication, QMainWindow, QWidget, QVBoxLayout, QTextEdit, QLineEdit, QCompleter
 from PyQt6.QtGui import QCursor
-from pyqtgraph import Vector
-import pyqtgraph.opengl as gl
+from pyqtgraph import Vector # type: ignore
+import pyqtgraph.opengl as gl # type: ignore
 
 from typing import Literal, Callable, cast
 
@@ -10,7 +10,7 @@ import numpy as np
 import time
 
 from pmpk.graphics.commands import CommandRegistry
-
+from pmpk.store import Store, Context
 
 PLACEMENT:dict[str, Callable[[int, int, int, int], tuple[int, int, int, int]]] = {
     "up-left": lambda x,y,w,h : (x,y,w,h),
@@ -72,6 +72,7 @@ class Graphic3DWindow(PMWindow):
         
         self.line3d = gl.GLLinePlotItem(pos=None, color=(0,1,0,1), width=0.5, antialias=True, mode='line_strip')
         self.view.addItem(self.line3d) # type: ignore
+        Store().setState("win_g", self)
         
     def fitGridToData(self, points: np.ndarray, spacing_ratio: float = 0.1):
         points = np.asarray(points)
@@ -100,11 +101,14 @@ class Graphic3DWindow(PMWindow):
         )
         
     def setLine(self, pos:tuple[int, int, int]|DataFrame, color:tuple[int, int, int, int]|DataFrame, width:float=0.5, antialias:bool=True, mode:Literal["lines","line_strip"]="line_strip", fit_camera:bool=True, fit_grid:bool=True):
-        self.line3d.setData(pos=pos, color=color, width=width, antialias=antialias, mode=mode)# type: ignore
-        if fit_camera:
-            self.fitCameraToData(cast(np.ndarray, pos))
-        if fit_grid:
-            self.fitGridToData(cast(np.ndarray, pos))
+        try: 
+            self.line3d.setData(pos=pos, color=color, width=width, antialias=antialias, mode=mode)# type: ignore
+            if fit_camera:
+                self.fitCameraToData(cast(np.ndarray, pos))
+            if fit_grid:
+                self.fitGridToData(cast(np.ndarray, pos))
+        except: 
+            pass
 
 
 class ConsoleWindow(PMWindow):
@@ -132,6 +136,7 @@ class ConsoleWindow(PMWindow):
         self.input_line.returnPressed.connect(self.process_command) # type: ignore
         
         self.window.setCentralWidget(widget)
+        Store().setState("win_c", self)
         
     def print_to_console(self, text: str):
         self.output_area.append(text)
@@ -148,7 +153,7 @@ class ConsoleWindow(PMWindow):
         self.print_to_console(f"> {raw_input}")
         result = self.registry.execute(
             raw_input, 
-            {"timestamp": time.perf_counter(), "log": self.print_to_console}  # replace this by a Object constructor such as Context()
+            Context(time.perf_counter(), self.print_to_console)
         )
 
         if result == "__CLEAR__":
