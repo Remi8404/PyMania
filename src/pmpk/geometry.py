@@ -1,7 +1,13 @@
 from math import radians, cos, sin
 from random import randint
 from pmpk.core.game_state import Coordinates
-from pandas import concat, DataFrame
+from pandas import read_csv, concat, DataFrame
+
+from pathlib import Path
+from os.path import isfile
+
+from typing import Literal
+from datetime import datetime
 
 
 def drawHelicoidaleCurve(radius:float = 10, ppl:int = 20, n_layers:int = 1, z_dif:int =10) -> DataFrame :
@@ -41,6 +47,24 @@ def drawRandomCurve(n_points:int = 400):
         y += randint(-5,20)/15
         z += randint(-5,2)/10
     return df
+
+def writeFileFromCurve(df:DataFrame, run_folder: str, extension: str, naming_method:Literal["specified", "date"]="date", f_name:str = "") -> None:
+    match naming_method:
+        case "specified":
+            rel_path = run_folder / Path(f"{f_name}.{extension}")
+            print(rel_path)
+        case "date":
+            rel_path = run_folder / Path(f"{datetime.today().strftime("%Y%m%d_%H%M%S")}")
+    df.to_csv(rel_path, index=False)
+
+def getCurveFromFile(run_folder: Path, f_name:str, extension:str)-> DataFrame :
+    rel_path = run_folder / Path(f"{f_name}.{extension}")
+    if isfile(rel_path):
+        df = read_csv(rel_path)
+        return df
+    else: 
+        print(f"{rel_path} is not an actual file.")
+        return DataFrame(columns=Coordinates.columns)
 
 def recenterDataFrame(df:DataFrame, columns: list[str] = ["x", "y", "z"]) -> DataFrame:
     centered = df.copy()

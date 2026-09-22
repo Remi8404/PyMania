@@ -3,21 +3,20 @@ from typing import Callable
 from PyQt6.QtWidgets import QApplication
 import time
 import numpy as np
+from pathlib import Path
 
-from pmpk.store import Store
-from pmpk.geometry import drawHelicoidaleCurve, drawRandomCurve, recenterDataFrame
-from pmpk.store import Context
-
-
+from pmpk.store import Store, Context
+from pmpk.geometry import drawHelicoidaleCurve, drawRandomCurve, recenterDataFrame, getCurveFromFile
+from pmpk.utils import EnvHandler
 
 
 @dataclass
 class Command:
     name: str
     func: Callable[[list[str], Context], str|None]
-    help: str = "No description given."
-    format: str = "No format given."
-    aliases: list[str] = field(default_factory=list)
+    help: str = field(default_factory=str)
+    format: str = field(default_factory=str)
+    aliases: list[str] = field(default_factory=list[str])
 
 class CommandRegistry:
     def __init__(self) -> None:
@@ -79,11 +78,10 @@ def build_registry() -> CommandRegistry:
         else: context.log(registry.getCommandHelp(args[0]))
 
     @registry.register("ping", help="Check console's base answer time.", format="`ping`")
-    def ping(args: list[str], context: Context) -> str:
+    def ping(args: list[str], context: Context) -> None:
         sent_at = context.ts
         elapsed_ms = (time.perf_counter() - sent_at) * 1000
-        context.log("test")
-        return f"Console answered in {elapsed_ms:.2f} ms"
+        context.log(f"Console answered in {elapsed_ms:.2f} ms")
     
     @registry.register("clear", help="Clear console's output and history", format="`clear`")
     def clear(args:list[str], context: Context):
@@ -103,7 +101,7 @@ def build_registry() -> CommandRegistry:
             case "clear":
                 df = np.empty((0, 3))
             case _ :
-                df = None
+                df = getCurveFromFile(Path(EnvHandler().getVar("RUN_DATA_FOLDER")), cleaned_args[0], "csv")
         if len(centering_axis) : context.log(f"Centering DataFrame on axis {", ".join(centering_axis)}")
         df = recenterDataFrame(df, centering_axis) # type: ignore
         context.log("Setting 3DLine as per ordered.")

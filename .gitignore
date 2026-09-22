@@ -1,5 +1,6 @@
 /PluginsExample/ 
 **/*.egg-info
 **/__pycache__/
-src/config_core/local_config.json
 .venv
+.env
+/run_data/

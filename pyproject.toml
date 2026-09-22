@@ -3,6 +3,7 @@ name = "pmpk"
 version = "0.1.0"
 requires-python = ">=3.11"
 dependencies = [
+    "dotenv>=0.9.9",
     "pandas>=3.0.3",
     "pyopengl>=3.1.10",
     "pyqt6>=6.11.0",

@@ -1,4 +1,4 @@
-from PyQt6.QtWidgets import QApplication, QMainWindow, QWidget, QVBoxLayout, QTextEdit, QLineEdit, QCompleter
+from PyQt6.QtWidgets import QApplication, QMainWindow, QWidget, QVBoxLayout, QTextEdit, QLineEdit
 from PyQt6.QtGui import QCursor
 from pyqtgraph import Vector # type: ignore
 import pyqtgraph.opengl as gl # type: ignore
@@ -72,7 +72,6 @@ class Graphic3DWindow(PMWindow):
         
         self.line3d = gl.GLLinePlotItem(pos=None, color=(0,1,0,1), width=0.5, antialias=True, mode='line_strip')
         self.view.addItem(self.line3d) # type: ignore
-        Store().setState("win_g", self)
         
     def fitGridToData(self, points: np.ndarray, spacing_ratio: float = 0.1):
         points = np.asarray(points)
@@ -115,6 +114,7 @@ class ConsoleWindow(PMWindow):
     def __init__(self, registry: CommandRegistry, name:str="Console", target_screen:Literal["first","cursor","size"]="cursor", pos:Literal["up-left","up-right","down-left","down-right"]="down-right"):
         super().__init__(name, target_screen, pos)
         self.registry = registry
+        self.context = Context(time.perf_counter(), self.print_to_console)
         
         widget = QWidget()
         
@@ -136,7 +136,6 @@ class ConsoleWindow(PMWindow):
         self.input_line.returnPressed.connect(self.process_command) # type: ignore
         
         self.window.setCentralWidget(widget)
-        Store().setState("win_c", self)
         
     def print_to_console(self, text: str):
         self.output_area.append(text)
@@ -153,7 +152,7 @@ class ConsoleWindow(PMWindow):
         self.print_to_console(f"> {raw_input}")
         result = self.registry.execute(
             raw_input, 
-            Context(time.perf_counter(), self.print_to_console)
+            self.context.update(ts = time.perf_counter()) # type: ignore
         )
 
         if result == "__CLEAR__":
